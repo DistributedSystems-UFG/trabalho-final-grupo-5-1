@@ -276,22 +276,3 @@ bash scripts/verificar_estrutura.sh
 ## 11. Observação conceitual sobre vendas e insumos
 
 Uma venda retira **marmitas prontas**. Os ingredientes são retirados quando a cozinha **produz** novas marmitas. O evento `vendas.concretizadas` é usado para status e análise; descontar ingredientes novamente nesse consumidor provocaria dupla baixa.
-
-## 12. Autorização opcional por papel
-
-O gRPC inclui um interceptor desligado por padrão. Para ativá-lo:
-
-```bash
-export AUTORIZACAO_HABILITADA=true
-export API_KEY_SISTEMA='chave-sistema'
-export API_KEY_COMPRAS='chave-compras'
-export API_KEY_GERENTE='chave-gerente'
-export API_KEY_DONO='chave-dono'
-export API_KEY_REPLICADOR='chave-replicador'
-```
-
-O cardápio e os workers encaminham a chave correspondente no metadado `x-api-key`. Isso demonstra separação entre vendas/produção, compras, manutenção gerencial e replicação. Para uma aplicação real, substitua API keys simples por TLS e identidade/autorização robustas.
-
-## 13. Próximos endurecimentos para produção
-
-A demonstração acadêmica prioriza concorrência e distribuição. Em produção, acrescente TLS, autenticação/autorização por papel, armazenamento transacional em banco de dados, observabilidade e um cluster Kafka com múltiplos brokers.
