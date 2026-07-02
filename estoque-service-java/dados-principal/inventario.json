@@ -1,0 +1,16 @@
+{
+  "versao" : 1,
+  "lojaAberta" : true,
+  "marmitas" : {
+    "P_BOVINA" : 8, "P_SUINA" : 8, "P_FRANGO" : 8,
+    "M_BOVINA" : 8, "M_SUINA" : 8, "M_FRANGO" : 8,
+    "G_BOVINA" : 8, "G_SUINA" : 8, "G_FRANGO" : 8
+  },
+  "insumos" : {
+    "ARROZ" : 200, "FEIJAO" : 200, "MACARRAO" : 200, "VERDURAS" : 200,
+    "CARNE_BOVINA" : 120, "CARNE_SUINA" : 120, "CARNE_FRANGO" : 120,
+    "EMBALAGEM_P" : 60, "EMBALAGEM_M" : 60, "EMBALAGEM_G" : 60
+  },
+  "operacoesProcessadas" : [],
+  "atualizadoEmEpochMs" : 0
+}

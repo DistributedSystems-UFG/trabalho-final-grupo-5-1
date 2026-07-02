@@ -1,0 +1,192 @@
+syntax = "proto3";
+
+package marmitaria.estoques.v2;
+
+option java_multiple_files = true;
+option java_package = "br.ufg.marmitaria.estoques.grpc";
+option java_outer_classname = "SistemaDeEstoquesProto";
+
+service SistemaDeEstoques {
+  rpc ConsultarEstoqueGeral(ConsultaEstoqueRequest) returns (EstoqueGeralResponse);
+  rpc PlanejarAtendimento(PlanejarAtendimentoRequest) returns (PlanejarAtendimentoResponse);
+
+  // Operação de negócio atômica: verifica e retira todos os itens do pedido sob a mesma trava.
+  rpc ReservarMarmitas(ReservaMarmitasRequest) returns (ReservaMarmitasResponse);
+
+  // Operações atômicas de produção e reposição.
+  rpc ProduzirMarmitas(ProduzirMarmitasRequest) returns (OperacaoInventarioResponse);
+  rpc ProduzirEReservar(ProduzirEReservarRequest) returns (OperacaoInventarioResponse);
+  rpc ReporInsumos(ReporInsumosRequest) returns (OperacaoInventarioResponse);
+
+  // Operações administrativas/manutenção.
+  rpc AjustarEstoqueMarmita(AjusteEstoqueMarmitaRequest) returns (OperacaoInventarioResponse);
+  rpc AjustarEstoqueInsumo(AjusteEstoqueInsumoRequest) returns (OperacaoInventarioResponse);
+  rpc AlterarEstadoLoja(AlterarEstadoLojaRequest) returns (OperacaoInventarioResponse);
+
+  // Replicação assíncrona: somente a instância configurada como réplica deve aceitar esta chamada.
+  rpc AplicarSnapshotReplica(AplicarSnapshotReplicaRequest) returns (OperacaoInventarioResponse);
+}
+
+message ConsultaEstoqueRequest {
+  int32 atraso_simulado_ms = 1;
+}
+
+enum TipoMarmita {
+  TIPO_MARMITA_NAO_ESPECIFICADO = 0;
+  MARMITA_P = 1;
+  MARMITA_M = 2;
+  MARMITA_G = 3;
+}
+
+enum TipoProteina {
+  TIPO_PROTEINA_NAO_ESPECIFICADO = 0;
+  BOVINA = 1;
+  SUINA = 2;
+  FRANGO = 3;
+}
+
+enum TipoInsumo {
+  TIPO_INSUMO_NAO_ESPECIFICADO = 0;
+  ARROZ = 1;
+  FEIJAO = 2;
+  MACARRAO = 3;
+  VERDURAS = 4;
+  CARNE_BOVINA = 5;
+  CARNE_SUINA = 6;
+  CARNE_FRANGO = 7;
+  EMBALAGEM_P = 8;
+  EMBALAGEM_M = 9;
+  EMBALAGEM_G = 10;
+}
+
+enum TipoAlerta {
+  TIPO_ALERTA_NAO_ESPECIFICADO = 0;
+  MARMITA_BAIXA = 1;
+  INSUMO_BAIXO = 2;
+  LOJA_FECHADA = 3;
+}
+
+message ItemMarmita {
+  TipoMarmita tamanho = 1;
+  TipoProteina proteina = 2;
+  int32 quantidade = 3;
+}
+
+message QuantidadeInsumo {
+  TipoInsumo tipo = 1;
+  int32 quantidade = 2;
+}
+
+message QuantidadeMarmitaEstoque {
+  TipoMarmita tamanho = 1;
+  TipoProteina proteina = 2;
+  int32 quantidade = 3;
+}
+
+message SnapshotInventario {
+  int64 versao = 1;
+  bool loja_aberta = 2;
+  repeated QuantidadeMarmitaEstoque marmitas = 3;
+  repeated QuantidadeInsumo insumos = 4;
+  int64 atualizado_em_epoch_ms = 5;
+}
+
+message AlertaEstoque {
+  string alerta_id = 1;
+  TipoAlerta tipo = 2;
+  string item = 3;
+  int32 quantidade_atual = 4;
+  int32 limite = 5;
+  int64 versao_inventario = 6;
+  string mensagem = 7;
+}
+
+message EstoqueGeralResponse {
+  SnapshotInventario snapshot = 1;
+  string thread_processamento = 2;
+  bool veio_da_replica = 3;
+}
+
+message PlanejarAtendimentoRequest {
+  repeated ItemMarmita itens = 1;
+}
+
+message PlanejarAtendimentoResponse {
+  bool atende_imediatamente = 1;
+  bool pode_produzir_faltantes = 2;
+  bool deve_fechar_loja = 3;
+  repeated ItemMarmita faltantes = 4;
+  repeated ItemMarmita oferta_parcial = 5;
+  repeated ItemMarmita producao_necessaria = 6;
+  SnapshotInventario snapshot = 7;
+  string mensagem = 8;
+  string thread_processamento = 9;
+}
+
+message ReservaMarmitasRequest {
+  string operacao_id = 1;
+  string pedido_id = 2;
+  repeated ItemMarmita itens = 3;
+}
+
+message ReservaMarmitasResponse {
+  bool sucesso = 1;
+  bool ja_processada = 2;
+  string mensagem = 3;
+  repeated ItemMarmita faltantes = 4;
+  SnapshotInventario snapshot = 5;
+  repeated AlertaEstoque alertas = 6;
+  string thread_processamento = 7;
+}
+
+message ProduzirMarmitasRequest {
+  string operacao_id = 1;
+  ItemMarmita item = 2;
+}
+
+message ProduzirEReservarRequest {
+  string operacao_id = 1;
+  string pedido_id = 2;
+  repeated ItemMarmita itens_pedido = 3;
+  int32 tamanho_lote = 4;
+}
+
+message ReporInsumosRequest {
+  string operacao_id = 1;
+  repeated QuantidadeInsumo itens = 2;
+}
+
+message AjusteEstoqueMarmitaRequest {
+  string operacao_id = 1;
+  TipoMarmita tamanho = 2;
+  TipoProteina proteina = 3;
+  int32 variacao = 4;
+}
+
+message AjusteEstoqueInsumoRequest {
+  string operacao_id = 1;
+  TipoInsumo tipo = 2;
+  int32 variacao = 3;
+}
+
+message AlterarEstadoLojaRequest {
+  string operacao_id = 1;
+  bool aberta = 2;
+  string motivo = 3;
+}
+
+message AplicarSnapshotReplicaRequest {
+  string operacao_id = 1;
+  SnapshotInventario snapshot = 2;
+}
+
+message OperacaoInventarioResponse {
+  bool sucesso = 1;
+  bool ja_processada = 2;
+  string mensagem = 3;
+  SnapshotInventario snapshot = 4;
+  repeated AlertaEstoque alertas = 5;
+  repeated QuantidadeInsumo insumos_consumidos = 6;
+  repeated ItemMarmita marmitas_produzidas = 7;
+  string thread_processamento = 8;
+}

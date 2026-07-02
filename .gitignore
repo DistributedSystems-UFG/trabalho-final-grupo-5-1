@@ -1,0 +1,20 @@
+# Java / Gradle / Maven
+**/target/
+**/build/
+.gradle/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+clientes-python/gerado_grpc/
+clientes-python/gerado_ice/
+
+# Runtime data
+cardapio-ice-java/dados-pedidos/
+*.log
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
